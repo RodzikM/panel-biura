@@ -1,1 +1,814 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Panel Projektanta - Biuro Projektowe</title>
 
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DOL-BUD">
+<meta name="theme-color" content="#0f172a">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Inter', sans-serif; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.hidden-view { display: none !important; }
+.toast-enter { transform: translateY(100%); opacity: 0; }
+.toast-enter-active { transform: translateY(0); opacity: 1; transition: transform 0.15s ease-out, opacity 0.15s ease-out; }
+.toast-leave { transform: translateY(0); opacity: 1; }
+.toast-leave-active { transform: translateY(100%); opacity: 0; transition: transform 0.15s ease-in, opacity 0.15s ease-in; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-hidden">
+
+<div class="flex h-screen w-full">
+
+<div id="mobile-overlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 transition-transform duration-300 ease-in-out flex flex-col shadow-xl">
+<div class="flex items-center justify-between p-6 border-b border-slate-800 mt-safe">
+<div class="flex items-center gap-3">
+<svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+<span class="text-white text-lg font-bold tracking-wider">ArchStudio</span>
+</div>
+<button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+</button>
+</div>
+<nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+<button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors bg-blue-600/10 text-blue-400 font-medium">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+Dashboard
+</button>
+<button onclick="switchView('projects')" id="nav-projects" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-slate-800 hover:text-white">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+Lista Projektów
+</button>
+
+<div class="mt-8 pt-4 border-t border-slate-800 space-y-2">
+<button onclick="exportData()" class="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left transition-colors hover:bg-slate-800 hover:text-white text-sm text-slate-400" title="Zapisz projekty do pliku na dysku">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+Eksportuj dane
+</button>
+<button onclick="document.getElementById('import-file').click()" class="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left transition-colors hover:bg-slate-800 hover:text-white text-sm text-slate-400" title="Załaduj projekty z pliku json">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+Wczytaj dane
+</button>
+<input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+</div>
+</nav>
+
+<div class="p-4 bg-slate-900 border-t border-slate-700 pb-safe">
+<div id="connection-status" class="text-xs text-center text-slate-400 mb-3">
+<i class="fa-solid fa-lock text-red-400"></i> Wymagane logowanie
+</div>
+
+<button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded flex items-center justify-center gap-2 transition shadow-sm">
+Zaloguj z Google
+</button>
+
+<div id="user-info" class="hidden flex flex-col items-center gap-2">
+<div class="text-xs text-slate-300 break-all bg-slate-800 p-2 rounded w-full text-center" id="user-email"></div>
+<button id="btn-logout" class="w-full bg-red-600 hover:bg-red-500 text-white font-medium py-1.5 px-4 rounded text-sm transition">
+Wyloguj
+</button>
+</div>
+</div>
+
+<div class="p-4 border-t border-slate-800 text-xs text-center text-slate-500 pb-8">
+<p>Wersja Cloud (Zabezpieczona)</p>
+</div>
+</aside>
+
+<main class="flex-1 flex flex-col h-full w-full bg-slate-50 relative overflow-hidden">
+<header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6 z-10 shrink-0 shadow-sm mt-safe">
+<div class="flex items-center">
+<button class="lg:hidden text-slate-500 hover:text-slate-800 mr-4" onclick="toggleSidebar()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+</button>
+<h2 id="view-title" class="text-xl font-semibold text-slate-800">Dashboard</h2>
+</div>
+<div>
+<button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+<span class="hidden sm:inline">Nowy Projekt</span>
+</button>
+</div>
+</header>
+
+<div class="flex-1 overflow-auto p-4 sm:p-6 w-full relative pb-20">
+
+<div id="view-dashboard" class="max-w-7xl mx-auto space-y-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-slate-500 text-sm font-medium">Wszystkie projekty</h3>
+<div class="bg-blue-50 text-blue-500 p-2 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
+</div>
+<p id="stat-total" class="text-3xl font-bold text-slate-800">0</p>
+</div>
+
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-slate-500 text-sm font-medium">W trakcie</h3>
+<div class="bg-amber-50 text-amber-500 p-2 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+</div>
+<p id="stat-progress" class="text-3xl font-bold text-slate-800">0</p>
+</div>
+
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-slate-500 text-sm font-medium">Zakończone / Opłacone</h3>
+<div class="bg-green-50 text-green-500 p-2 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+</div>
+<p id="stat-finished" class="text-3xl font-bold text-slate-800">0</p>
+</div>
+
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden">
+<div class="absolute inset-y-0 left-0 w-1 bg-red-500"></div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-slate-500 text-sm font-medium">Zaległe po terminie</h3>
+<div class="bg-red-50 text-red-500 p-2 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+</div>
+<p id="stat-overdue" class="text-3xl font-bold text-red-600">0</p>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+<h3 class="font-semibold text-slate-800 flex items-center gap-2">
+<svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+Zbliżające się terminy (30 dni)
+</h3>
+</div>
+<div class="p-0 overflow-y-auto max-h-96">
+<ul id="list-upcoming" class="divide-y divide-slate-100">
+<li class="p-5 text-center text-slate-500 text-sm">Ładowanie...</li>
+</ul>
+</div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-red-50/30">
+<h3 class="font-semibold text-slate-800 flex items-center gap-2">
+<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+Zaległe projekty
+</h3>
+</div>
+<div class="p-0 overflow-y-auto max-h-96">
+<ul id="list-overdue" class="divide-y divide-slate-100">
+<li class="p-5 text-center text-slate-500 text-sm">Ładowanie...</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<div id="view-projects" class="max-w-7xl mx-auto hidden-view flex-col h-full">
+
+<div class="bg-white p-4 rounded-t-xl border border-slate-200 border-b-0 flex flex-col sm:flex-row gap-4 justify-between items-center shrink-0">
+<div class="relative w-full sm:w-72">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+</div>
+<input type="text" id="search-input" placeholder="Szukaj (nazwa, projektant)..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+</div>
+
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<label for="filter-status" class="text-sm text-slate-600 hidden sm:block">Filtruj:</label>
+<select id="filter-status" class="w-full sm:w-auto border border-slate-200 rounded-lg text-sm px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer">
+<option value="Wszystkie">Wszystkie stany</option>
+<option value="Nierozpoczęty">Nierozpoczęty</option>
+<option value="Rozpoczęty">Rozpoczęty</option>
+<option value="Zakończony">Zakończony</option>
+<option value="Opłacony">Opłacony</option>
+</select>
+</div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-b-xl shadow-sm overflow-hidden flex-1 flex flex-col relative">
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left text-sm text-slate-600 border-collapse">
+<thead class="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold sticky top-0">
+<tr>
+<th class="px-4 py-3 whitespace-nowrap">Nazwa Zamierzenia</th>
+<th class="px-4 py-3 whitespace-nowrap">Projektant</th>
+<th class="px-4 py-3 whitespace-nowrap">Inwestor</th>
+<th class="px-4 py-3 whitespace-nowrap hidden md:table-cell">Lokalizacja</th>
+<th class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">Daty (Rozp. - Termin)</th>
+<th class="px-4 py-3 whitespace-nowrap">Stan</th>
+<th class="px-4 py-3 text-right whitespace-nowrap">Akcje</th>
+</tr>
+</thead>
+<tbody id="projects-table-body" class="divide-y divide-slate-100 bg-white">
+<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">Zaloguj się, aby wyświetlić dane.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+</div>
+</main>
+</div>
+
+<div id="modal-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex justify-center items-center hidden p-4">
+
+<div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+<div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
+<h3 id="modal-title" class="text-lg font-bold text-slate-800">Dodaj Nowy Projekt</h3>
+<button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-md hover:bg-slate-100">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+</button>
+</div>
+
+<div class="p-6 overflow-y-auto flex-1">
+<form id="project-form" class="space-y-5">
+<input type="hidden" id="project-id">
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="md:col-span-2">
+<label class="block text-sm font-medium text-slate-700 mb-1">Nazwa zamierzenia <span class="text-red-500">*</span></label>
+<input type="text" id="p-nazwa" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="np. Projekt budynku wielorodzinnego">
+</div>
+
+<div>
+<label class="block text-sm font-medium text-slate-700 mb-1">Projektant (Odpowiedzialny)</label>
+<input type="text" id="p-projektant" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Jan Kowalski">
+</div>
+
+<div>
+<label class="block text-sm font-medium text-slate-700 mb-1">Stan Projektu <span class="text-red-500">*</span></label>
+<select id="p-stan" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+<option value="Nierozpoczęty">Nierozpoczęty</option>
+<option value="Rozpoczęty">Rozpoczęty</option>
+<option value="Zakończony">Zakończony</option>
+<option value="Opłacony">Opłacony</option>
+</select>
+</div>
+
+<div>
+<label class="block text-sm font-medium text-slate-700 mb-1">Data <span class="text-red-500">*</span></label>
+<input type="month" id="p-data" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700">
+</div>
+
+<div>
+<label class="block text-sm font-medium text-slate-700 mb-1">Termin oddania <span class="text-red-500">*</span></label>
+<input type="date" id="p-termin" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700">
+</div>
+
+<div class="md:col-span-2">
+<label class="block text-sm font-medium text-slate-700 mb-1">Adres Inwestora (Klient)</label>
+<input type="text" id="p-inwestor" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Imię, Nazwisko, Adres, NIP...">
+</div>
+
+<div class="md:col-span-2">
+<label class="block text-sm font-medium text-slate-700 mb-1">Adres Inwestycji (Lokalizacja)</label>
+<input type="text" id="p-inwestycja" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="ul. Przykładowa 12, 00-000 Miasto">
+</div>
+</div>
+</form>
+</div>
+
+<div class="px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex justify-end gap-3 shrink-0">
+<button type="button" onclick="closeModal()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">Anuluj</button>
+<button type="button" onclick="saveProject()" id="btn-save" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+Zapisz Projekt
+</button>
+</div>
+</div>
+</div>
+
+<div id="toast-container" class="fixed bottom-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none mb-safe"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyADo9bIeMEOT6-7u2NiuKjt1uVWEcEQBO8",
+authDomain: "panel-projektanta.firebaseapp.com",
+projectId: "panel-projektanta",
+storageBucket: "panel-projektanta.firebasestorage.app",
+messagingSenderId: "951255332695",
+appId: "1:951255332695:web:8691321736c4d01921b012",
+measurementId: "G-0ZBV3CZT0Z"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let projectsData = [];
+let unsubscribeSnapshot = null;
+
+let currentView = 'dashboard';
+let searchQuery = '';
+let filterStatus = 'Wszystkie';
+
+const elApp = {
+viewDashboard: document.getElementById('view-dashboard'),
+viewProjects: document.getElementById('view-projects'),
+viewTitle: document.getElementById('view-title'),
+navDashboard: document.getElementById('nav-dashboard'),
+navProjects: document.getElementById('nav-projects'),
+tableBody: document.getElementById('projects-table-body'),
+listUpcoming: document.getElementById('list-upcoming'),
+listOverdue: document.getElementById('list-overdue'),
+searchInput: document.getElementById('search-input'),
+filterSelect: document.getElementById('filter-status'),
+
+modalOverlay: document.getElementById('modal-overlay'),
+modalContent: document.getElementById('modal-content'),
+modalTitle: document.getElementById('modal-title'),
+form: document.getElementById('project-form'),
+btnSave: document.getElementById('btn-save'),
+
+statTotal: document.getElementById('stat-total'),
+statProgress: document.getElementById('stat-progress'),
+statFinished: document.getElementById('stat-finished'),
+statOverdue: document.getElementById('stat-overdue'),
+};
+
+// Funkcja wywołująca okno logowania Google
+function triggerGoogleLogin() {
+signInWithPopup(auth, provider).catch((error) => {
+console.error("Błąd logowania:", error);
+window.showToast("Wystąpił błąd podczas logowania Google.", "error");
+});
+}
+
+document.getElementById('btn-login').addEventListener('click', triggerGoogleLogin);
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+signOut(auth).catch((error) => console.error("Błąd wylogowania:", error));
+});
+
+onAuthStateChanged(auth, (user) => {
+const statusElement = document.getElementById('connection-status');
+if (user) {
+document.getElementById('btn-login').classList.add('hidden');
+document.getElementById('user-info').classList.remove('hidden');
+document.getElementById('user-email').innerText = user.email;
+statusElement.innerHTML = '<i class="fa-solid fa-cloud-check text-green-400"></i> Zalogowano';
+
+listenToProjects();
+} else {
+document.getElementById('btn-login').classList.remove('hidden');
+document.getElementById('user-info').classList.add('hidden');
+statusElement.innerHTML = '<i class="fa-solid fa-lock text-red-400"></i> Wymagane logowanie';
+
+projectsData = [];
+updateUI();
+if (unsubscribeSnapshot) {
+unsubscribeSnapshot();
+unsubscribeSnapshot = null;
+}
+
+// AUTOMATYCZNE WYWOŁANIE OKNA LOGOWANIA PO URUCHOMIENIU
+// Dajemy krótka chwilę na załadowanie strony i od razu pytamy o Google
+setTimeout(() => {
+if (!auth.currentUser) {
+triggerGoogleLogin();
+}
+}, 300);
+}
+});
+
+function listenToProjects() {
+unsubscribeSnapshot = onSnapshot(collection(db, "projects"), (snapshot) => {
+projectsData = [];
+snapshot.forEach((doc) => {
+projectsData.push({ id: doc.id, ...doc.data() });
+});
+
+projectsData.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+updateUI();
+}, (error) => {
+console.error("Błąd pobierania danych:", error);
+window.showToast("Brak uprawnień do odczytu bazy danych.", "error");
+});
+}
+
+window.toggleSidebar = () => {
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('mobile-overlay');
+const isClosed = sidebar.classList.contains('-translate-x-full');
+
+if (isClosed) {
+sidebar.classList.remove('-translate-x-full');
+overlay.classList.remove('hidden');
+} else {
+sidebar.classList.add('-translate-x-full');
+overlay.classList.add('hidden');
+}
+};
+
+window.switchView = (viewName) => {
+currentView = viewName;
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+btn.classList.remove('bg-blue-600/10', 'text-blue-400');
+btn.classList.add('hover:bg-slate-800', 'hover:text-white');
+});
+
+if(viewName === 'dashboard') {
+elApp.viewDashboard.classList.remove('hidden-view');
+elApp.viewProjects.classList.add('hidden-view');
+elApp.viewTitle.textContent = 'Dashboard';
+elApp.navDashboard.classList.add('bg-blue-600/10', 'text-blue-400');
+elApp.navDashboard.classList.remove('hover:bg-slate-800', 'hover:text-white');
+} else if (viewName === 'projects') {
+elApp.viewDashboard.classList.add('hidden-view');
+elApp.viewProjects.classList.remove('hidden-view');
+elApp.viewTitle.textContent = 'Lista Projektów';
+elApp.navProjects.classList.add('bg-blue-600/10', 'text-blue-400');
+elApp.navProjects.classList.remove('hover:bg-slate-800', 'hover:text-white');
+}
+
+if(window.innerWidth < 1024) {
+const sidebar = document.getElementById('sidebar');
+if(!sidebar.classList.contains('-translate-x-full')) {
+window.toggleSidebar();
+}
+}
+
+updateUI();
+};
+
+elApp.searchInput.addEventListener('input', (e) => {
+searchQuery = e.target.value.trim().toLowerCase();
+renderProjectsTable();
+});
+
+elApp.filterSelect.addEventListener('change', (e) => {
+filterStatus = e.target.value;
+renderProjectsTable();
+});
+
+function updateUI() {
+if(currentView === 'dashboard') {
+renderDashboard();
+} else {
+renderProjectsTable();
+}
+}
+
+function getTodayAtMidnight() {
+const t = new Date();
+t.setHours(0,0,0,0);
+return t;
+}
+
+function getStatusBadgeClass(status) {
+switch(status) {
+case 'Nierozpoczęty': return 'bg-slate-100 text-slate-600 border-slate-200';
+case 'Rozpoczęty': return 'bg-amber-100 text-amber-700 border-amber-200';
+case 'Zakończony': return 'bg-green-100 text-green-700 border-green-200';
+case 'Opłacony': return 'bg-blue-100 text-blue-700 border-blue-200';
+default: return 'bg-slate-100 text-slate-600';
+}
+}
+
+function escapeHTML(str) {
+if(!str) return '';
+const p = document.createElement('p');
+p.textContent = str;
+return p.innerHTML;
+}
+
+function isOverdue(termin, stan) {
+if(!termin || stan === 'Zakończony' || stan === 'Opłacony') return false;
+const t = new Date(termin);
+t.setHours(0,0,0,0);
+return t < getTodayAtMidnight();
+}
+
+function renderDashboard() {
+const today = getTodayAtMidnight();
+const future30Days = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+let statInProgress = 0;
+let statFin = 0;
+let statOver = 0;
+
+const upcoming = [];
+const overdue = [];
+
+projectsData.forEach(p => {
+const isFinished = p.stan === 'Zakończony' || p.stan === 'Opłacony';
+
+if (p.stan === 'Rozpoczęty') statInProgress++;
+if (isFinished) statFin++;
+
+if (p.termin) {
+const deadline = new Date(p.termin);
+deadline.setHours(0,0,0,0);
+
+if (!isFinished) {
+if (deadline < today) {
+statOver++;
+overdue.push(p);
+} else if (deadline >= today && deadline <= future30Days) {
+upcoming.push(p);
+}
+}
+}
+});
+
+upcoming.sort((a,b) => new Date(a.termin) - new Date(b.termin));
+overdue.sort((a,b) => new Date(a.termin) - new Date(b.termin));
+
+elApp.statTotal.textContent = projectsData.length;
+elApp.statProgress.textContent = statInProgress;
+elApp.statFinished.textContent = statFin;
+elApp.statOverdue.textContent = statOver;
+
+if (upcoming.length === 0) {
+elApp.listUpcoming.innerHTML = `<li class="p-5 text-center text-slate-500 text-sm">Brak zbliżających się terminów.</li>`;
+} else {
+elApp.listUpcoming.innerHTML = upcoming.map(p => `
+<li class="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center cursor-pointer" onclick="openModal('${p.id}')">
+<div class="overflow-hidden pr-2">
+<h4 class="font-medium text-slate-800 truncate" title="${escapeHTML(p.nazwa)}">${escapeHTML(p.nazwa)}</h4>
+<p class="text-xs text-slate-500 truncate mt-0.5">Projektant: ${escapeHTML(p.projektant || 'Nie przypisano')}</p>
+</div>
+<div class="text-right shrink-0">
+<p class="text-sm font-semibold text-amber-600">${p.termin}</p>
+<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-medium border ${getStatusBadgeClass(p.stan)}">${p.stan}</span>
+</div>
+</li>
+`).join('');
+}
+
+if (overdue.length === 0) {
+elApp.listOverdue.innerHTML = `<li class="p-5 text-center text-slate-500 text-sm">Świetnie! Brak zaległych projektów.</li>`;
+} else {
+elApp.listOverdue.innerHTML = overdue.map(p => {
+const daysOver = Math.floor((today - new Date(p.termin)) / (1000 * 60 * 60 * 24));
+return `
+<li class="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center cursor-pointer" onclick="openModal('${p.id}')">
+<div class="overflow-hidden pr-2">
+<h4 class="font-medium text-slate-800 truncate" title="${escapeHTML(p.nazwa)}">${escapeHTML(p.nazwa)}</h4>
+<p class="text-xs text-slate-500 truncate mt-0.5">Projektant: ${escapeHTML(p.projektant || 'Nie przypisano')}</p>
+</div>
+<div class="text-right shrink-0">
+<p class="text-sm font-bold text-red-600">${p.termin}</p>
+<span class="text-xs text-red-500 font-medium">${daysOver} dni temu</span>
+</div>
+</li>
+`}).join('');
+}
+}
+
+function renderProjectsTable() {
+let filtered = projectsData;
+
+if (filterStatus !== 'Wszystkie') {
+filtered = filtered.filter(p => p.stan === filterStatus);
+}
+
+if (searchQuery) {
+filtered = filtered.filter(p =>
+(p.nazwa && p.nazwa.toLowerCase().includes(searchQuery)) ||
+(p.projektant && p.projektant.toLowerCase().includes(searchQuery)) ||
+(p.inwestor && p.inwestor.toLowerCase().includes(searchQuery))
+);
+}
+
+if (filtered.length === 0) {
+elApp.tableBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">Brak projektów.</td></tr>`;
+return;
+}
+
+elApp.tableBody.innerHTML = filtered.map(p => `
+<tr class="hover:bg-slate-50 transition-colors group">
+<td class="px-4 py-3 border-b border-slate-100">
+<p class="font-medium text-slate-800 truncate max-w-[200px]" title="${escapeHTML(p.nazwa)}">${escapeHTML(p.nazwa)}</p>
+</td>
+<td class="px-4 py-3 border-b border-slate-100">
+<p class="text-sm text-slate-600 truncate max-w-[150px]" title="${escapeHTML(p.projektant)}">${escapeHTML(p.projektant || '-')}</p>
+</td>
+<td class="px-4 py-3 border-b border-slate-100">
+<p class="text-sm text-slate-600 truncate max-w-[150px]" title="${escapeHTML(p.inwestor)}">${escapeHTML(p.inwestor || '-')}</p>
+</td>
+<td class="px-4 py-3 border-b border-slate-100 hidden md:table-cell">
+<p class="text-sm text-slate-500 truncate max-w-[150px]" title="${escapeHTML(p.inwestycja)}">${escapeHTML(p.inwestycja || '-')}</p>
+</td>
+<td class="px-4 py-3 border-b border-slate-100 hidden lg:table-cell text-sm text-slate-600">
+<div>S: ${p.dataStart || '-'}</div>
+<div class="${isOverdue(p.termin, p.stan) ? 'text-red-600 font-semibold' : ''}">T: ${p.termin || '-'}</div>
+</td>
+<td class="px-4 py-3 border-b border-slate-100">
+<span class="px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadgeClass(p.stan)} whitespace-nowrap">
+${p.stan}
+</span>
+</td>
+<td class="px-4 py-3 border-b border-slate-100 text-right whitespace-nowrap">
+<button onclick="openModal('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors inline-block mr-1" title="Edytuj">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+</button>
+<button onclick="deleteProject('${p.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors inline-block" title="Usuń">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+</button>
+</td>
+</tr>
+`).join('');
+}
+
+window.openModal = (id = null) => {
+elApp.form.reset();
+elApp.modalOverlay.classList.remove('hidden');
+
+document.getElementById('p-data').value = new Date().toISOString().slice(0, 7);
+
+if (id) {
+elApp.modalTitle.textContent = "Edytuj Projekt";
+const proj = projectsData.find(p => p.id === id);
+if(proj) {
+document.getElementById('project-id').value = proj.id;
+document.getElementById('p-nazwa').value = proj.nazwa || '';
+document.getElementById('p-projektant').value = proj.projektant || '';
+document.getElementById('p-stan').value = proj.stan || 'Nierozpoczęty';
+document.getElementById('p-data').value = proj.dataStart || '';
+document.getElementById('p-termin').value = proj.termin || '';
+document.getElementById('p-inwestor').value = proj.inwestor || '';
+document.getElementById('p-inwestycja').value = proj.inwestycja || '';
+}
+} else {
+elApp.modalTitle.textContent = "Dodaj Nowy Projekt";
+document.getElementById('project-id').value = "";
+}
+};
+
+window.closeModal = () => {
+elApp.modalOverlay.classList.add('hidden');
+};
+
+window.showToast = (message, type = 'success') => {
+const container = document.getElementById('toast-container');
+const toast = document.createElement('div');
+const colorClass = type === 'error' ? 'bg-red-600' : (type === 'info' ? 'bg-blue-600' : 'bg-slate-800');
+toast.className = `px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium flex items-center gap-2 toast-enter pointer-events-auto ${colorClass}`;
+
+const icon = type === 'error' ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+: '<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+
+toast.innerHTML = `${icon} <span>${escapeHTML(message)}</span>`;
+container.appendChild(toast);
+
+requestAnimationFrame(() => {
+requestAnimationFrame(() => {
+toast.classList.remove('toast-enter');
+toast.classList.add('toast-enter-active');
+});
+});
+
+setTimeout(() => {
+toast.classList.remove('toast-enter-active');
+toast.classList.add('toast-leave-active');
+toast.addEventListener('transitionend', () => toast.remove());
+}, 3000);
+}
+
+window.saveProject = async () => {
+if(!elApp.form.checkValidity()) {
+elApp.form.reportValidity();
+return;
+}
+if (!auth.currentUser) {
+window.showToast("Musisz być zalogowany, aby zapisać projekt.", "error");
+return;
+}
+
+const idField = document.getElementById('project-id').value;
+const isUpdate = idField !== "";
+
+const formData = {
+nazwa: document.getElementById('p-nazwa').value.trim(),
+projektant: document.getElementById('p-projektant').value.trim(),
+stan: document.getElementById('p-stan').value,
+dataStart: document.getElementById('p-data').value,
+termin: document.getElementById('p-termin').value,
+inwestor: document.getElementById('p-inwestor').value.trim(),
+inwestycja: document.getElementById('p-inwestycja').value.trim(),
+updatedAt: new Date().toISOString()
+};
+
+try {
+if (isUpdate) {
+await updateDoc(doc(db, "projects", idField), formData);
+window.showToast("Projekt zaktualizowany");
+} else {
+formData.createdAt = new Date().toISOString();
+await addDoc(collection(db, "projects"), formData);
+window.showToast("Projekt dodany pomyślnie");
+}
+closeModal();
+} catch (error) {
+console.error("Błąd zapisu w Firebase:", error);
+window.showToast("Brak uprawnień. Upewnij się, że Twój email jest dodany do reguł bazy.", "error");
+}
+};
+
+window.deleteProject = (id) => {
+if (!auth.currentUser) {
+window.showToast("Zaloguj się, aby usunąć projekt.", "error");
+return;
+}
+
+const confOverlay = document.createElement('div');
+confOverlay.className = "fixed inset-0 bg-slate-900/60 z-[80] flex justify-center items-center backdrop-blur-sm px-4";
+confOverlay.innerHTML = `
+<div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+<h4 class="text-lg font-bold text-slate-800 mb-2">Usuń projekt</h4>
+<p class="text-sm text-slate-600 mb-6">Czy na pewno chcesz usunąć ten projekt? Operacji nie można cofnąć.</p>
+<div class="flex justify-end gap-3">
+<button id="btn-cancel-del" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">Anuluj</button>
+<button id="btn-confirm-del" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">Usuń trwale</button>
+</div>
+</div>
+`;
+document.body.appendChild(confOverlay);
+
+document.getElementById('btn-cancel-del').onclick = () => {
+confOverlay.remove();
+};
+
+document.getElementById('btn-confirm-del').onclick = async () => {
+try {
+await deleteDoc(doc(db, "projects", id));
+window.showToast("Projekt usunięty z bazy", "info");
+} catch(error) {
+console.error("Błąd usuwania:", error);
+window.showToast("Brak uprawnień do usunięcia.", "error");
+}
+confOverlay.remove();
+};
+};
+
+window.exportData = () => {
+if (projectsData.length === 0) {
+window.showToast("Brak projektów do wyeksportowania.", "info");
+return;
+}
+const dataStr = JSON.stringify(projectsData, null, 2);
+const blob = new Blob([dataStr], { type: "application/json" });
+const url = URL.createObjectURL(blob);
+
+const a = document.createElement('a');
+a.href = url;
+a.download = "baza_projektow_kopia.json";
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+
+window.showToast("Kopia zapasowa pobrana.", "info");
+};
+
+window.importData = async (event) => {
+if (!auth.currentUser) {
+window.showToast("Zaloguj się, aby zaimportować pliki.", "error");
+return;
+}
+
+const file = event.target.files[0];
+if (!file) return;
+
+const reader = new FileReader();
+reader.onload = async (e) => {
+try {
+const importedData = JSON.parse(e.target.result);
+if (Array.isArray(importedData)) {
+window.showToast("Trwa wgrywanie do chmury...", "info");
+for (const proj of importedData) {
+const { id, ...dataToSave } = proj;
+await addDoc(collection(db, "projects"), dataToSave);
+}
+window.showToast("Wszystkie dane załadowane!");
+} else {
+window.showToast("Zły format pliku.", "error");
+}
+} catch (error) {
+console.error("Błąd odczytu:", error);
+window.showToast("Błąd pliku JSON.", "error");
+}
+};
+reader.readAsText(file);
+event.target.value = "";
+};
+</script>
+</body>
+</html>
