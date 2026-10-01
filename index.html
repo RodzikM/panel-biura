@@ -16,8 +16,8 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            /* Zabezpieczenie dla iPhone'a - rozciąga tło na całą przestrzeń pod wyspą */
-            background-color: #f8fafc;
+            /* Ustawiamy czystą biel jako bazę, aby pasek pod wyspą zlewał się z nagłówkiem */
+            background-color: #ffffff;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
         }
@@ -33,7 +33,7 @@
         .toast-leave-active { transform: translateY(100%); opacity: 0; transition: transform 0.15s ease-in, opacity 0.15s ease-in; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 overflow-hidden">
+<body class="bg-white text-slate-800 overflow-hidden">
 
     <!-- Ekran blokady logowania -->
     <div id="login-gate" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex flex-col justify-center items-center p-6">
