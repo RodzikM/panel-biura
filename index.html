@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DOL-BUD">
+    <meta name="apple-mobile-web-app-title" content="ArchStudio">
     <!-- Wymuszenie koloru dla dolnej bezpiecznej strefy iPhone'a (Home Indicator) -->
     <meta name="theme-color" content="#f8fafc">
     
@@ -16,7 +16,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Magiczna kombinacja dla PWA na iOS zapobiegająca pustym paskom u dołu */
         html, body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f8fafc; 
@@ -25,7 +24,9 @@
             width: 100%;
             height: 100%;
             height: -webkit-fill-available;
+            position: fixed; 
             overflow: hidden;
+            overscroll-behavior-y: none;
         }
 
         .safe-container {
@@ -71,16 +72,18 @@
 
         <!-- Boczny Panel -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-0 transition-transform duration-300 ease-in-out flex flex-col shadow-xl" style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">
                 <div class="flex items-center gap-3">
                     <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <span class="text-white text-lg font-bold tracking-wider">DOL-BUD</span>
+                    <span class="text-white text-lg font-bold tracking-wider">ArchStudio</span>
                 </div>
                 <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            
+            <!-- min-h-0 oraz -webkit-overflow-scrolling przywracają scroll na iPhonie -->
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto min-h-0" style="-webkit-overflow-scrolling: touch;">
                 <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors bg-blue-600/10 text-blue-400 font-medium">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     Dashboard
@@ -103,7 +106,7 @@
                 </div>
             </nav>
             
-            <div class="p-4 bg-slate-900 border-t border-slate-700">
+            <div class="p-4 bg-slate-900 border-t border-slate-700 shrink-0">
                 <div id="connection-status" class="text-xs text-center text-slate-400 mb-3">
                     <i class="fa-solid fa-lock text-red-400"></i> Wymagane logowanie
                 </div>
@@ -121,8 +124,8 @@
             </div>
         </aside>
 
-        <!-- Główna zawartość -->
-        <main class="flex-1 flex flex-col h-full w-full bg-slate-50 relative overflow-hidden">
+        <!-- Główna zawartość - dodano min-h-0 oraz min-w-0 aby zachować układ na iOS -->
+        <main class="flex-1 flex flex-col h-full min-h-0 min-w-0 w-full bg-slate-50 relative overflow-hidden">
             <header class="bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10 shrink-0 shadow-sm" style="padding-top: env(safe-area-inset-top); min-height: calc(4rem + env(safe-area-inset-top));">
                 <div class="flex items-center">
                     <button class="lg:hidden text-slate-500 hover:text-slate-800 mr-4" onclick="toggleSidebar()">
@@ -138,7 +141,8 @@
                 </div>
             </header>
 
-            <div class="flex-1 overflow-auto p-4 sm:p-6 w-full relative" style="padding-bottom: calc(2rem + env(safe-area-inset-bottom));">
+            <!-- Obszar przewijania z min-h-0 i -webkit-overflow-scrolling w celu naprawy błędów Safari -->
+            <div class="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 w-full relative" style="padding-bottom: calc(2rem + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch;">
                 
                 <div id="view-dashboard" class="max-w-7xl mx-auto space-y-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -184,7 +188,7 @@
                                     Zbliżające się terminy (30 dni)
                                 </h3>
                             </div>
-                            <div class="p-0 overflow-y-auto max-h-96">
+                            <div class="p-0 overflow-y-auto max-h-96" style="-webkit-overflow-scrolling: touch;">
                                 <ul id="list-upcoming" class="divide-y divide-slate-100">
                                     <li class="p-5 text-center text-slate-500 text-sm">Ładowanie...</li>
                                 </ul>
@@ -198,7 +202,7 @@
                                     Zaległe projekty
                                 </h3>
                             </div>
-                            <div class="p-0 overflow-y-auto max-h-96">
+                            <div class="p-0 overflow-y-auto max-h-96" style="-webkit-overflow-scrolling: touch;">
                                 <ul id="list-overdue" class="divide-y divide-slate-100">
                                     <li class="p-5 text-center text-slate-500 text-sm">Ładowanie...</li>
                                 </ul>
@@ -229,10 +233,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-white border border-slate-200 rounded-b-xl shadow-sm overflow-hidden flex-1 flex flex-col relative">
-                        <div class="overflow-x-auto w-full">
+                    <div class="bg-white border border-slate-200 rounded-b-xl shadow-sm overflow-hidden flex-1 flex flex-col relative min-h-0">
+                        <div class="overflow-x-auto overflow-y-auto w-full h-full" style="-webkit-overflow-scrolling: touch;">
                             <table class="w-full text-left text-sm text-slate-600 border-collapse">
-                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold sticky top-0">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold sticky top-0 z-10">
                                     <tr>
                                         <th class="px-4 py-3 whitespace-nowrap">Nazwa Zamierzenia</th>
                                         <th class="px-4 py-3 whitespace-nowrap">Projektant</th>
@@ -266,7 +270,7 @@
                 </button>
             </div>
             
-            <div class="p-6 overflow-y-auto flex-1">
+            <div class="p-6 overflow-y-auto flex-1" style="-webkit-overflow-scrolling: touch;">
                 <form id="project-form" class="space-y-5">
                     <input type="hidden" id="project-id">
                     
